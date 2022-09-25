@@ -83,8 +83,8 @@ io.on('connection', function(socket){
 
     socket.on('player move', function(data) {
         const obj = JSON.parse(data);
-		//console.log('recv: move: '+JSON.stringify(data));
 		currentPlayer.position = obj.position;
+        console.log(JSON.stringify(currentPlayer))
 		socket.broadcast.emit('player move', JSON.stringify(currentPlayer));
 	});
 
