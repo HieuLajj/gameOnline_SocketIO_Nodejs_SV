@@ -1,3 +1,4 @@
+const { Console } = require('console');
 const { domainToUnicode } = require('url');
 
 var app = require('express')();
@@ -26,7 +27,8 @@ io.on('connection', function(socket){
             var playerConnected = {
                 name: clients[i].name,
                 position: clients[i].position,
-                health: clients[i].health
+                health: clients[i].health,
+                rotationWeapon: clients[i].rotationWeapon
             }
             socket.emit('other player connected', JSON.stringify(playerConnected));
             console.log("cap nhap nguoi thu"+i);
@@ -65,9 +67,11 @@ io.on('connection', function(socket){
         // console.log(currentPlayer.name + "emit: enemies"+ JSON.stringify(enemiesResponse));
         // socket.emit("enemies", enemiesResponse);
          var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
+         console.log(randomSpawnPoint.position+"pl");
         currentPlayer = {
             name: obj.name,
             position: randomSpawnPoint.position,
+            rotationWeapon:[0.0,0.0,0.0],
             health: 100
         }
         //console.log("xin chao ban den binh nguyen vo tan"+ currentPlayer.name );
@@ -84,8 +88,14 @@ io.on('connection', function(socket){
     socket.on('player move', function(data) {
         const obj = JSON.parse(data);
 		currentPlayer.position = obj.position;
-        console.log(JSON.stringify(currentPlayer))
+        //console.log(JSON.stringify(currentPlayer))
 		socket.broadcast.emit('player move', JSON.stringify(currentPlayer));
+	});
+
+    socket.on('weapon rotation', function(data){
+        const obj = JSON.parse(data);
+		currentPlayer.rotationWeapon= obj.rotation;
+		socket.broadcast.emit('weapon rotation', JSON.stringify(currentPlayer));
 	});
 
 
