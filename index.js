@@ -43,16 +43,16 @@ io.on('connection', function(socket){
         const obj = JSON.parse(data);
         console.log(currentPlayer.name + 'recv: play '+ JSON.stringify(data));
          if(clients.length === 0){
-            numberOfEnemies = obj.enemySpawnPoints.length;
-            enemies = [];
-            obj.enemySpawnPoints.forEach(function(enemySpawnPoint){
-                 var enemy = {
-                    name: guid(),
-                    position: enemySpawnPoint.position,
-                    health: 100
-                }
-            enemies.push(enemy);
-            })
+            // numberOfEnemies = obj.enemySpawnPoints.length;
+            // enemies = [];
+            // obj.enemySpawnPoints.forEach(function(enemySpawnPoint){
+            //      var enemy = {
+            //         name: guid(),
+            //         position: enemySpawnPoint.position,
+            //         health: 100
+            //     }
+            // enemies.push(enemy);
+            // })
             playerSpawnPoints = [];
             obj.playerSpawnPoints.forEach(function(_playerSpawnPoint){
                  var playerSpawnPoint = {
@@ -61,9 +61,11 @@ io.on('connection', function(socket){
                  playerSpawnPoints.push(playerSpawnPoint);
              })
         }
-         var enemiesResponse = {
-            enemies: enemies
-         }
+        //  var enemiesResponse = {
+        //     enemies: enemies
+        //  }
+
+
         // console.log(currentPlayer.name + "emit: enemies"+ JSON.stringify(enemiesResponse));
         // socket.emit("enemies", enemiesResponse);
          var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
@@ -72,6 +74,7 @@ io.on('connection', function(socket){
             name: obj.name,
             position: randomSpawnPoint.position,
             rotationWeapon:[0.0,0.0,0.0],
+            selectedGun: 0,
             health: 100
         }
         //console.log("xin chao ban den binh nguyen vo tan"+ currentPlayer.name );
@@ -97,16 +100,18 @@ io.on('connection', function(socket){
 		currentPlayer.rotationWeapon= obj.rotation;
 		socket.broadcast.emit('weapon rotation', JSON.stringify(currentPlayer));
 	});
-
+    
+    socket.on('selected gun', function(data){
+        const obj = JSON.parse(data);
+        currentPlayer.selectedGun = obj.selectedGun;
+        socket.broadcast.emit('selected gun', JSON.stringify(currentPlayer));
+    })
 
 	socket.on('player shoot', function() {
-		console.log(currentPlayer.name+' recv: shoot');
 		var data = {
 			name: currentPlayer.name
 		};
-		console.log(currentPlayer.name+' bcst: shoot: '+JSON.stringify(data));
-		socket.emit('player shoot', data);
-		socket.broadcast.emit('player shoot', data);
+		socket.broadcast.emit('player shoot', JSON.stringify(data));
 	});
 
     socket.on('health', function(data) {
@@ -153,12 +158,6 @@ io.on('connection', function(socket){
 			}
 		}
 	});
-
-    // socket.emit('message', {hello:"world"});
-    // socket.on('message',function(data){
-    //     console.log(data);
-    //     console.log("hahaha");
-    // })
 })
 
 function guid(){
