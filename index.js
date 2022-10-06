@@ -28,17 +28,15 @@ io.on('connection', function(socket){
                 name: clients[i].name,
                 position: clients[i].position,
                 health: clients[i].health,
+                selectedGun: clients[i].selectedGun,
                 rotationWeapon: clients[i].rotationWeapon
             }
+
             socket.emit('other player connected', JSON.stringify(playerConnected));
-            console.log("cap nhap nguoi thu"+i);
+            console.log("cap nhap nguoi thu"+i +"la" +JSON.stringify(playerConnected));
         }
     });
 
-    socket.on('play2', function(data){
-        console.log("bat dau van choi"+data);
-        socket.emit("inPlayer2","cuoicungcungdc");
-    })
     socket.on('play', function(data){
         const obj = JSON.parse(data);
         console.log(currentPlayer.name + 'recv: play '+ JSON.stringify(data));
@@ -56,7 +54,7 @@ io.on('connection', function(socket){
             playerSpawnPoints = [];
             obj.playerSpawnPoints.forEach(function(_playerSpawnPoint){
                  var playerSpawnPoint = {
-                     position: _playerSpawnPoint.position
+                    position: _playerSpawnPoint.position           
                  }
                  playerSpawnPoints.push(playerSpawnPoint);
              })
@@ -115,35 +113,31 @@ io.on('connection', function(socket){
 	});
 
     socket.on('health', function(data) {
-		console.log(currentPlayer.name+' recv: health: '+JSON.stringify(data));
+        const obj = JSON.parse(data);
+        // console.log("=================="); 
+		// console.log(currentPlayer.name+'___'+obj.from);
 		// only change the health once, we can do this by checking the originating player
-		if(data.from === currentPlayer.name) {
+		if(obj.from === currentPlayer.name) {
+            console.log("ok"+currentPlayer.name+'___'+obj.from)
 			var indexDamaged = 0;
-			if(!data.isEnemy) {
+			// if(!data.isEnemy) {
 				clients = clients.map(function(client, index) {
-					if(client.name === data.name) {
+					if(client.name === obj.name) {
 						indexDamaged = index;
-						client.health -= data.healthChange;
+						client.health -= obj.healthChange;
 					}
 					return client;
 				});
-			} else {
-				enemies = enemies.map(function(enemy, index) {
-					if(enemy.name === data.name) {
-						indexDamaged = index;
-						enemy.health -= data.healthChange;
-					}
-					return enemy;
-				});
-			}
+			//}
 
 			var response = {
-				name: (!data.isEnemy) ? clients[indexDamaged].name : enemies[indexDamaged].name,
-				health: (!data.isEnemy) ? clients[indexDamaged].health : enemies[indexDamaged].health
+				name: clients[indexDamaged].name,
+				health: clients[indexDamaged].health
 			};
-			console.log(currentPlayer.name+' bcst: health: '+JSON.stringify(response));
-			socket.emit('health', response);
-			socket.broadcast.emit('health', response);
+            
+			console.log("okfoawkfopawejfoawjhfoiawef"+JSON.stringify(response));
+			socket.emit('health', JSON.stringify(response));
+			socket.broadcast.emit('health', JSON.stringify(response));
 		}
 	});
 
