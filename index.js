@@ -1,163 +1,159 @@
 const { Console } = require('console');
+const { Server } = require('http');
 const { domainToUnicode } = require('url');
+let Player = require("./Classes/Player");
+let ServerGame = require("./Classes/ServerGame");
 
-var app = require('express')();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
 
+let app = require('express')();
+let server = require('http').Server(app);
+let io = require('socket.io')(server);
 server.listen(3000);
 
-//global variables for the server
-var enemies = [];
-var playerSpawnPoints = [];
-var clients = [];
+let serverGame = new ServerGame();
 
-app.get("/", function(req, res){
-    res.send('hey you got back get"/"');
-})
+// setInterval(()=>{
+//     serverGame.onUpdate();
+// }, 100, 0);
 
-io.on('connection', function(socket){
-    console.log("new connection: "+ socket.id);
-    var currentPlayer = {};
-    currentPlayer.name = 'unknown';
-
-    socket.on('player connect', function(){
-        console.log("so nguoi da co"+ clients.length);
-        for( var i =0; i< clients.length; i++){
-            var playerConnected = {
-                name: clients[i].name,
-                position: clients[i].position,
-                health: clients[i].health,
-                selectedGun: clients[i].selectedGun,
-                rotationWeapon: clients[i].rotationWeapon
-            }
-
-            socket.emit('other player connected', JSON.stringify(playerConnected));
-            console.log("cap nhap nguoi thu"+i +"la" +JSON.stringify(playerConnected));
-        }
-    });
-
-    socket.on('play', function(data){
-        const obj = JSON.parse(data);
-        console.log(currentPlayer.name + 'recv: play '+ JSON.stringify(data));
-         if(clients.length === 0){
-            // numberOfEnemies = obj.enemySpawnPoints.length;
-            // enemies = [];
-            // obj.enemySpawnPoints.forEach(function(enemySpawnPoint){
-            //      var enemy = {
-            //         name: guid(),
-            //         position: enemySpawnPoint.position,
-            //         health: 100
-            //     }
-            // enemies.push(enemy);
-            // })
-            playerSpawnPoints = [];
-            obj.playerSpawnPoints.forEach(function(_playerSpawnPoint){
-                 var playerSpawnPoint = {
-                    position: _playerSpawnPoint.position           
-                 }
-                 playerSpawnPoints.push(playerSpawnPoint);
-             })
-        }
-        //  var enemiesResponse = {
-        //     enemies: enemies
-        //  }
-
-
-        // console.log(currentPlayer.name + "emit: enemies"+ JSON.stringify(enemiesResponse));
-        // socket.emit("enemies", enemiesResponse);
-         var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
-         console.log(randomSpawnPoint.position+"pl");
-        currentPlayer = {
-            name: obj.name,
-            position: randomSpawnPoint.position,
-            rotationWeapon:[0.0,0.0,0.0],
-            selectedGun: 0,
-            health: 100
-        }
-        //console.log("xin chao ban den binh nguyen vo tan"+ currentPlayer.name );
-        //console.log(obj.playerSpawnPoints[0].position);
-        clients.push(currentPlayer);
-        // console.log(currentPlayer.name + 'emit: play' + JSON.stringify(currentPlayer));
-
-        socket.emit('play',JSON.stringify(currentPlayer));
-        socket.broadcast.emit('other player connected', JSON.stringify(currentPlayer));
-        console.log(":))")
-        //socket.emit('other player connected', JSON.stringify(currentPlayer));
-    })
-
-    socket.on('player move', function(data) {
-        const obj = JSON.parse(data);
-		currentPlayer.position = obj.position;
-        //console.log(JSON.stringify(currentPlayer))
-		socket.broadcast.emit('player move', JSON.stringify(currentPlayer));
-	});
-
-    socket.on('weapon rotation', function(data){
-        const obj = JSON.parse(data);
-		currentPlayer.rotationWeapon= obj.rotation;
-		socket.broadcast.emit('weapon rotation', JSON.stringify(currentPlayer));
-	});
+io.on('connection', function(socket) {
+    console.log(socket.id+"ten id")
+    let connection = serverGame.onConnected(socket);
+    connection.createEvents();
     
-    socket.on('selected gun', function(data){
-        const obj = JSON.parse(data);
-        currentPlayer.selectedGun = obj.selectedGun;
-        socket.broadcast.emit('selected gun', JSON.stringify(currentPlayer));
-    })
+    //connection.socket.emit('register', {'id': connection.player.id});
+});
 
-	socket.on('player shoot', function() {
-		var data = {
-			name: currentPlayer.name
-		};
-		socket.broadcast.emit('player shoot', JSON.stringify(data));
-	});
 
-    socket.on('health', function(data) {
-        const obj = JSON.parse(data);
-        // console.log("=================="); 
-		// console.log(currentPlayer.name+'___'+obj.from);
-		// only change the health once, we can do this by checking the originating player
-		if(obj.from === currentPlayer.name) {
-            console.log("ok"+currentPlayer.name+'___'+obj.from)
-			var indexDamaged = 0;
-			// if(!data.isEnemy) {
-				clients = clients.map(function(client, index) {
-					if(client.name === obj.name) {
-						indexDamaged = index;
-						client.health -= obj.healthChange;
-					}
-					return client;
-				});
-			//}
 
-			var response = {
-				name: clients[indexDamaged].name,
-				health: clients[indexDamaged].health
-			};
-            
-			console.log("okfoawkfopawejfoawjhfoiawef"+JSON.stringify(response));
-			socket.emit('health', JSON.stringify(response));
-			socket.broadcast.emit('health', JSON.stringify(response));
-		}
-	});
 
-    socket.on('disconnect', function() {
-        console.log("nguoi choi da ngat ket noi");
-		console.log(currentPlayer.name+' recv: disconnect '+currentPlayer.name);
-		socket.broadcast.emit('other player disconnected', currentPlayer);
-		console.log(currentPlayer.name+' bcst: other player disconnected '+JSON.stringify(currentPlayer));
-		for(var i=0; i<clients.length; i++) {
-			if(clients[i].name === currentPlayer.name) {
-				clients.splice(i,1);
-			}
-		}
-	});
-})
 
-function guid(){
-    function s4(){
-        return Math.floor((1+Math.random()) * 0x10000).toString(16).substring(1);
-    }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// //global variables for the server
+// var playerSpawnPoints = [];
+
+// //____
+// var players = [];
+// var sockets = [];
+
+// app.get("/", function(req, res){
+//     res.send('hey you got back get"/"');
+// })
+
+// io.on('connection', function(socket){
+//     console.log("new connection: "+ socket.id);
+//     var currentPlayer = {};
+//     currentPlayer.name = 'unknown';
+
+//     //____
+//     var currentPlayerr = new Player();
+//     var thisPlayerID = currentPlayerr.id;
+
+//     players[thisPlayerID] = currentPlayerr;
+//     sockets[thisPlayerID] = socket;
+
+
+//     socket.on('player connect', function(){    
+//             for(var player in players){
+//                 if(thisPlayerID!=player){
+//                     socket.emit('other player connected', JSON.stringify(players[player]));
+//                 }
+//             }
+//     });
+
+//     socket.on('play', function(data){
+//         const obj = JSON.parse(data);
+//         if(players == 0){
+//             playerSpawnPoints = [];
+//             obj.playerSpawnPoints.forEach(function(_playerSpawnPoint){
+                
+//                 console.log(_playerSpawnPoint.position+"haahahhahahaha");
+//                 var playerSpawnPoint = {
+//                     position: _playerSpawnPoint.position           
+//                 }
+//                 playerSpawnPoints.push(playerSpawnPoint);
+//              })
+//         }
+//         var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
+//         currentPlayerr.setPlayer(obj.name, randomSpawnPoint.position, 100, 0, [0.0,0.0,0.0]);
+//         socket.emit('play',JSON.stringify(currentPlayerr));
+//         socket.broadcast.emit('other player connected', JSON.stringify(currentPlayerr));
+             
+//     })
+
+//     socket.on('player move', function(data) {
+//         const obj = JSON.parse(data);
+//         currentPlayerr.position = obj.position;
+//         socket.broadcast.emit('player move', JSON.stringify(currentPlayerr));
+// 	});
+
+//     socket.on('weapon rotation', function(data){
+//         const obj = JSON.parse(data);
+//         currentPlayerr.rotationWeapon = obj.rotation;
+//         socket.broadcast.emit('weapon rotation', JSON.stringify(currentPlayerr));
+// 	});
+    
+//     socket.on('selected gun', function(data){
+//         const obj = JSON.parse(data);
+//          currentPlayerr.selectedGun = obj.selectedGun;
+//          socket.broadcast.emit('selected gun', JSON.stringify(currentPlayerr));
+//     })
+
+// 	socket.on('player shoot', function() {
+// 		var data = {
+// 			name: currentPlayerr.name
+// 		};
+// 		socket.broadcast.emit('player shoot', JSON.stringify(data));
+// 	});
+
+//     socket.on('health', function(data) {
+//         const obj = JSON.parse(data); 
+//         if(obj.from === currentPlayerr.name) {
+//                 for(var player in players){       
+//                     if(players[player].name === obj.name){
+//                         console.log(players[player].name+"()()()");
+//                         players[player].health -= obj.healthChange;
+//                         var response = {
+//                             name: players[player].name,
+//                             health: players[player].health,
+//                         };
+//                         socket.emit('health', JSON.stringify(response));
+//                         socket.broadcast.emit('health', JSON.stringify(response));
+//                     };
+//                 }
+// 		}
+// 	});
+
+//     socket.on('disconnect', function() {
+// 		socket.broadcast.emit('other player disconnected', JSON.stringify(currentPlayerr));
+//         delete players[thisPlayerID];
+//         delete sockets[thisPlayerID];
+// 	});
+// })
+
+// function guid(){
+//     function s4(){
+//         return Math.floor((1+Math.random()) * 0x10000).toString(16).substring(1);
+//     }
+//     return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+// }
 console.log('--server is running ...');
