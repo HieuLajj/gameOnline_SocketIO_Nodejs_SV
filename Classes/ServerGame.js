@@ -67,42 +67,54 @@ module.exports = class ServerGame {
         // delete sockets[thisPlayerID];
     }
 
-    onAttemptToJoinGame(connection = Connection) {
+    onAttemptToJoinGame(connection = Connection, data) {
         //Look through lobbies for a gamelobby
         //check if joinable
         //if not make a new game
         let server = this;
         let lobbyFound = false;
 
-        let gameLobbies = server.lobbys.filter(item => {
-            return item instanceof GameLobby;
-        });
-        console.log('Found (' + gameLobbies.length + ') lobbies on the server');
+        // let gameLobbies = server.lobbys.filter(item => {
+        //     return item instanceof GameLobby;
+        // });
+        // console.log('Found (' + gameLobbies.length + ') lobbies on the server');
 
-        gameLobbies.forEach(lobby => {
-            if(!lobbyFound) {
-                let canJoin = lobby.canEnterLobby(connection);
+        // gameLobbies.forEach(lobby => {
+        //     console.log("toilalaihieu"+lobby)
+        //     if(!lobbyFound) {
+        //         let canJoin = lobby.canEnterLobby(connection);
 
-                if(canJoin) {
-                    lobbyFound = true;
-                    server.onSwitchLobby(connection, lobby.id);
-                }
+        //         if(canJoin) {
+        //             lobbyFound = true;
+        //             server.onSwitchLobby(connection, lobby.id);
+        //         }
+        //     }
+        // });
+
+        for(var key in server.lobbys){
+            console.log("keyMem"+key);
+            if(data == key){
+                lobbyFound  = true;
             }
-        });
+        }
 
         //All game lobbies full or we have never created one
         if(!lobbyFound) {
-            console.log('Making a new game lobby');
-            let gamelobby = new GameLobby(gameLobbies.length + 1, new GameLobbySetting('FFA', 2));
-            server.lobbys.push(gamelobby);
+            console.log('Making a new game lobby '+data);
+            //let gamelobby = new GameLobby(gameLobbies.length + 1, new GameLobbySetting('FFA', 2));
+            let gamelobby = new GameLobby(data, new GameLobbySetting('FFA', 2));
+            //server.lobbys.push(gamelobby);
+            server.lobbys[data] = gamelobby;
             server.onSwitchLobby(connection, gamelobby.id);
+        }
+        else{
+            server.onSwitchLobby(connection, data);
         }
         
     }
     onSwitchLobby(connection = Connection, lobbyID) {
         let server = this;
         let lobbys = server.lobbys;
-
         connection.socket.join(lobbyID); // Join the new lobby's socket channel
         connection.lobby = lobbys[lobbyID];//assign reference to the new lobby
 

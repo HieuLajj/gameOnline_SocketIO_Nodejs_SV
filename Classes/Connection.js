@@ -30,41 +30,50 @@ module.exports = class Connection{
             var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
             player.setPlayer(obj.name, randomSpawnPoint, 100, 0, [0.0,0.0,0.0]);
             socket.emit('play',JSON.stringify(player));
-            socket.broadcast.emit('other player connected', JSON.stringify(player));
+            socket.broadcast.to(connection.lobby.id).emit('other player connected', JSON.stringify(player));
         })
 
-        socket.on('player connect', function(){    
-            for(var key in server.connections){
-                if(player != server.connections[key].player){
+        socket.on('player connect', function(){ 
+            // console.log(connection.lobby.id+"fhahweiuawhe")
+            // console.log(server.lobbys)   
+            for(var key in server.lobbys[connection.lobby.id].connections){
+                //console.log("key"+key);
+                if(player != server.lobbys[connection.lobby.id].connections[key].player){
                     socket.emit('other player connected', JSON.stringify(server.connections[key].player));
                 }
             }
+            // for(var key in server.lobbys){
+            //     console.log("key"+server.lobbys[key]);
+            //     // if(player != server.lobbys[connection.lobby.id].connections[key].player){
+            //     //     socket.emit('other player connected', JSON.stringify(server.connections[key].player));
+            //     // }
+            // }
         });
 
         socket.on('weapon rotation', function(data){
             const obj = JSON.parse(data);
             player.rotationWeapon = obj.rotation;
-            socket.broadcast.emit('weapon rotation', JSON.stringify(player));
+            socket.broadcast.to(connection.lobby.id).emit('weapon rotation', JSON.stringify(player));
 	    });
 
         socket.on('selected gun', function(data){
             const obj = JSON.parse(data);
             player.selectedGun = obj.selectedGun;
-            socket.broadcast.emit('selected gun', JSON.stringify(player));
+            socket.broadcast.to(connection.lobby.id).emit('selected gun', JSON.stringify(player));
         })
 
         socket.on('player shoot', function() {
 		    var data = {
 			    name: player.name
 		    };
-		    socket.broadcast.emit('player shoot', JSON.stringify(data));
+		    socket.broadcast.to(connection.lobby.id).emit('player shoot', JSON.stringify(data));
 	    });
 
 
         socket.on('player move', function(data) {
             const obj = JSON.parse(data);
             player.position = obj.position;
-            socket.broadcast.emit('player move', JSON.stringify(player));
+            socket.broadcast.to(connection.lobby.id).emit('player move', JSON.stringify(player));
 	    });
 
         socket.on('health', function(data) {
@@ -80,7 +89,7 @@ module.exports = class Connection{
                             health: server.connections[key].player.health,
                         };
                         socket.emit('health', JSON.stringify(response));
-                        socket.broadcast.emit('health', JSON.stringify(response));
+                        socket.broadcast.to(connection.lobby.id).emit('health', JSON.stringify(response));
                     };
                 }
                     // for(var player in players){       
@@ -103,8 +112,8 @@ module.exports = class Connection{
             server.onDisconnected(connection);
         });
         
-        socket.on("joinGame", function(){
-            server.onAttemptToJoinGame(connection);
+        socket.on("joinGame", function(data){
+            server.onAttemptToJoinGame(connection,data);
         });
 
         socket.on("fireBullet", function(){
