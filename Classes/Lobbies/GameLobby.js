@@ -1,11 +1,13 @@
 let LobbyBase = require("./LobbyBase");
 let GameLobbySettings = require("./GameLobbySetting");
 let Connection = require("../Connection");
+let LobbyState = require("../Utility/LobbyState")
 
 module.exports = class GameLobby extends LobbyBase{
     constructor(id, settings = GameLobbySettings){
         super(id);
         this.settings = settings;
+        this.lobbyState = new LobbyState();
     }
 
     onUpdate(){

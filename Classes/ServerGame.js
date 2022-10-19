@@ -9,6 +9,7 @@ module.exports = class ServerGame {
     constructor(){
         this.connections = [];
         this.lobbys = [];
+        //server.lobbys[data] = gamelobby;
         this.lobbys[0] = new LobbyBase(0);
     }
 
@@ -32,7 +33,8 @@ module.exports = class ServerGame {
         connection.socket = socket;
         connection.server = server;
         connection.player = new Player();
-        connection.player.setPlayer("hieu", [2.0,2.0,2.0], 100, 0, [0.0,0.0,0.0]);
+
+        // connection.player.setPlayer("hieu", [2.0,2.0,2.0], 100, 0, [0.0,0.0,0.0]);
 
         let player = connection.player;
         let lobbys = server.lobbys;
@@ -46,7 +48,7 @@ module.exports = class ServerGame {
         socket.join(player.lobby);
         connection.lobby = lobbys[player.lobby];
         connection.lobby.onEnterLobby(connection);
-        
+        this.onLoadRoom(connection);
         return connection;
     }
 
@@ -74,25 +76,7 @@ module.exports = class ServerGame {
         let server = this;
         let lobbyFound = false;
 
-        // let gameLobbies = server.lobbys.filter(item => {
-        //     return item instanceof GameLobby;
-        // });
-        // console.log('Found (' + gameLobbies.length + ') lobbies on the server');
-
-        // gameLobbies.forEach(lobby => {
-        //     console.log("toilalaihieu"+lobby)
-        //     if(!lobbyFound) {
-        //         let canJoin = lobby.canEnterLobby(connection);
-
-        //         if(canJoin) {
-        //             lobbyFound = true;
-        //             server.onSwitchLobby(connection, lobby.id);
-        //         }
-        //     }
-        // });
-
         for(var key in server.lobbys){
-            console.log("keyMem"+key);
             if(data == key){
                 lobbyFound  = true;
             }
@@ -104,7 +88,11 @@ module.exports = class ServerGame {
             //let gamelobby = new GameLobby(gameLobbies.length + 1, new GameLobbySetting('FFA', 2));
             let gamelobby = new GameLobby(data, new GameLobbySetting('FFA', 2));
             //server.lobbys.push(gamelobby);
+            this.addRoom(connection, gamelobby);
             server.lobbys[data] = gamelobby;
+            //console.log("okokoko"+JSON.stringify(server.lobbys[data]))
+            // connection.socket.broadcast.emit('list Room',JSON.stringify(server.lobbys));
+            
             server.onSwitchLobby(connection, gamelobby.id);
         }
         else{
@@ -120,5 +108,19 @@ module.exports = class ServerGame {
 
         lobbys[connection.player.lobby].onLeaveLobby(connection);
         lobbys[lobbyID].onEnterLobby(connection);
+    }
+
+    onLoadRoom(connection = Connection){
+        console.log("okokdangchay")
+        let server = this;
+        for(var key in server.lobbys){
+            if(key != 0){
+                console.log("okokoko"+JSON.stringify(server.lobbys[key]))
+                connection.socket.emit('list Room',JSON.stringify(server.lobbys[key]));
+            }
+        }
+    }
+    addRoom(connection = Connection, gamelobby){
+        connection.socket.broadcast.to(0).emit('list Room', JSON.stringify(gamelobby));
     }
 }

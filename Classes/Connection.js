@@ -1,3 +1,4 @@
+let PositionSpawn = require ("./PositionSpawn");
 module.exports = class Connection{
     constructor(){
         this.socket;
@@ -16,19 +17,7 @@ module.exports = class Connection{
         socket.on('play', function(data){
             let playerSpawnPoints = [];
             const obj = JSON.parse(data);
-
-            let countPlayer = 0;
-            for(var key in server.connections){
-                countPlayer++;
-            }
-            //if(countPlayer == 1){
-                playerSpawnPoints = [];
-                obj.playerSpawnPoints.forEach(function(_playerSpawnPoint){        
-                    playerSpawnPoints.push(_playerSpawnPoint.position);
-                })
-            //}
-            var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
-            player.setPlayer(obj.name, randomSpawnPoint, 100, 0, [0.0,0.0,0.0]);
+            player.setPlayer(obj.name, PositionSpawn.lobbyPosition , 100, 0, [0.0,0.0,0.0]);
             socket.emit('play',JSON.stringify(player));
             socket.broadcast.to(connection.lobby.id).emit('other player connected', JSON.stringify(player));
         })
@@ -39,7 +28,7 @@ module.exports = class Connection{
             for(var key in server.lobbys[connection.lobby.id].connections){
                 //console.log("key"+key);
                 if(player != server.lobbys[connection.lobby.id].connections[key].player){
-                    socket.emit('other player connected', JSON.stringify(server.connections[key].player));
+                    socket.emit('other player connected', JSON.stringify(server.connections[key]?.player));
                 }
             }
             // for(var key in server.lobbys){
