@@ -8,6 +8,8 @@ module.exports = class GameLobby extends LobbyBase{
         super(id);
         this.settings = settings;
         this.lobbyState = new LobbyState();
+        this.roommaster;
+
     }
 
     onUpdate(){
@@ -18,11 +20,9 @@ module.exports = class GameLobby extends LobbyBase{
         let lobby = this;
         let maxPlayerCount = lobby.settings.maxPlayers;
         let currentPlayerCount = lobby.connections.length;
-
         if(currentPlayerCount + 1 > maxPlayerCount){
             return false;
         }
-
         return true;
     }
 

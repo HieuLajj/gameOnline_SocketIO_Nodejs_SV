@@ -9,21 +9,11 @@ module.exports = class ServerGame {
     constructor(){
         this.connections = [];
         this.lobbys = [];
-        //server.lobbys[data] = gamelobby;
         this.lobbys[0] = new LobbyBase(0);
     }
 
     onUpdate(){
-        
-        // for(var key in this.connections){
-        //    console.log(this.connections[key].player.name+"--player--");
-        // }
-        // if(this.connections == 0){
-        //     console.log("dang null");
-        // }else{
-        //     console.log("het null"+this.connections+"ok");
-        // }
-        
+      
     }
 
     onConnected(socket){
@@ -33,18 +23,10 @@ module.exports = class ServerGame {
         connection.socket = socket;
         connection.server = server;
         connection.player = new Player();
-
-        // connection.player.setPlayer("hieu", [2.0,2.0,2.0], 100, 0, [0.0,0.0,0.0]);
-
         let player = connection.player;
         let lobbys = server.lobbys;
-
-        //console.log(JSON.stringify(connection.player)+"fakjlfhakjhefakjolehfokjalehfnaokjlefhaiwjh");
         server.connections[player.id] = connection;
         
-        //console.log(JSON.stringify(server.connections[player.id].player.name)+"-------------hhh")
-        console.log(server.connections[player.id].player.name+"-------------hhh")
-
         socket.join(player.lobby);
         connection.lobby = lobbys[player.lobby];
         connection.lobby.onEnterLobby(connection);
@@ -63,12 +45,9 @@ module.exports = class ServerGame {
 
         //Preform lobby clean up
         server.lobbys[connection.player.lobby].onLeaveLobby(connection);
-
-        // socket.broadcast.emit('other player disconnected', JSON.stringify(currentPlayerr));
-        // delete players[thisPlayerID];
-        // delete sockets[thisPlayerID];
     }
 
+    // them phong
     onAttemptToJoinGame(connection = Connection, data) {
         //Look through lobbies for a gamelobby
         //check if joinable
@@ -85,14 +64,11 @@ module.exports = class ServerGame {
         //All game lobbies full or we have never created one
         if(!lobbyFound) {
             console.log('Making a new game lobby '+data);
-            //let gamelobby = new GameLobby(gameLobbies.length + 1, new GameLobbySetting('FFA', 2));
             let gamelobby = new GameLobby(data, new GameLobbySetting('FFA', 2));
-            //server.lobbys.push(gamelobby);
             this.addRoom(connection, gamelobby);
             server.lobbys[data] = gamelobby;
-            //console.log("okokoko"+JSON.stringify(server.lobbys[data]))
-            // connection.socket.broadcast.emit('list Room',JSON.stringify(server.lobbys));
-            
+            server.lobbys[data].roommaster = connection;
+            console.log(JSON.stringify(connection.player)+"dang la chu phong");
             server.onSwitchLobby(connection, gamelobby.id);
         }
         else{
@@ -100,23 +76,32 @@ module.exports = class ServerGame {
         }
         
     }
+
+    // doi lobby
     onSwitchLobby(connection = Connection, lobbyID) {
         let server = this;
+        if(connection.player.lobby != "0"){
+            connection.socket.broadcast.to(connection.player.lobby).emit('other player disconnected',JSON.stringify(connection.player));
+        }
         let lobbys = server.lobbys;
         connection.socket.join(lobbyID); // Join the new lobby's socket channel
         connection.lobby = lobbys[lobbyID];//assign reference to the new lobby
-
         lobbys[connection.player.lobby].onLeaveLobby(connection);
         lobbys[lobbyID].onEnterLobby(connection);
     }
 
     onLoadRoom(connection = Connection){
-        console.log("okokdangchay")
+        //console.log("okokdangchay")
         let server = this;
         for(var key in server.lobbys){
             if(key != 0){
-                console.log("okokoko"+JSON.stringify(server.lobbys[key]))
-                connection.socket.emit('list Room',JSON.stringify(server.lobbys[key]));
+                var lobbyInformation = {
+                    id: server.lobbys[key].id,
+                    currentState: server.lobbys[key].lobbyState.currentState,
+                    roommaster: server.lobbys[key].roommaster.player.id
+                };
+                //console.log("okokoko"+JSON.stringify(server.lobbys[key]))
+                connection.socket.emit('list Room',JSON.stringify(lobbyInformation));
             }
         }
     }

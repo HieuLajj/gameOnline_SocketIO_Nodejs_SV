@@ -15,28 +15,34 @@ module.exports = class Connection{
 
         
         socket.on('play', function(data){
-            let playerSpawnPoints = [];
             const obj = JSON.parse(data);
             player.setPlayer(obj.name, PositionSpawn.lobbyPosition , 100, 0, [0.0,0.0,0.0]);
             socket.emit('play',JSON.stringify(player));
             socket.broadcast.to(connection.lobby.id).emit('other player connected', JSON.stringify(player));
         })
 
+        socket.on('start game',function(data){
+            socket.emit('start game',data);
+            socket.broadcast.to(connection.lobby.id).emit('start game',data);
+            //console.log(JSON.stringify(connection.lobby)+"truoc khi vao game");
+            connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.GAME;
+            //console.log(JSON.stringify(connection.lobby)+"sau khi vao game");
+        })
+
+        socket.on('back lobby',function(data){
+            socket.emit('back lobby',data);
+            socket.broadcast.to(connection.lobby.id).emit('back lobby',data);
+            //console.log(JSON.stringify(connection.lobby)+"truoc khi thoat game");
+            connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.LOBBY;
+            //console.log(JSON.stringify(connection.lobby)+"sau khi thoat game");
+        })
+
         socket.on('player connect', function(){ 
-            // console.log(connection.lobby.id+"fhahweiuawhe")
-            // console.log(server.lobbys)   
             for(var key in server.lobbys[connection.lobby.id].connections){
-                //console.log("key"+key);
                 if(player != server.lobbys[connection.lobby.id].connections[key].player){
                     socket.emit('other player connected', JSON.stringify(server.connections[key]?.player));
                 }
             }
-            // for(var key in server.lobbys){
-            //     console.log("key"+server.lobbys[key]);
-            //     // if(player != server.lobbys[connection.lobby.id].connections[key].player){
-            //     //     socket.emit('other player connected', JSON.stringify(server.connections[key].player));
-            //     // }
-            // }
         });
 
         socket.on('weapon rotation', function(data){
@@ -59,16 +65,17 @@ module.exports = class Connection{
 	    });
 
 
+        //move
         socket.on('player move', function(data) {
             const obj = JSON.parse(data);
             player.position = obj.position;
             socket.broadcast.to(connection.lobby.id).emit('player move', JSON.stringify(player));
 	    });
 
+        //hp
         socket.on('health', function(data) {
             const obj = JSON.parse(data); 
             if(obj.from === player.name) {
-
                 for(var key in server.connections){
                     if(server.connections[key].player.name === obj.name){
                         console.log(server.connections[key].player.name+"()()()");
@@ -81,21 +88,8 @@ module.exports = class Connection{
                         socket.broadcast.to(connection.lobby.id).emit('health', JSON.stringify(response));
                     };
                 }
-                    // for(var player in players){       
-                    //     if(players[player].name === obj.name){
-                    //         console.log(players[player].name+"()()()");
-                    //         players[player].health -= obj.healthChange;
-                    //         var response = {
-                    //             name: players[player].name,
-                    //             health: players[player].health,
-                    //         };
-                    //         socket.emit('health', JSON.stringify(response));
-                    //         socket.broadcast.emit('health', JSON.stringify(response));
-                    //     };
-                    // }
             }
 	    });
-
 
         socket.on("disconnect", function(){
             server.onDisconnected(connection);
@@ -103,10 +97,6 @@ module.exports = class Connection{
         
         socket.on("joinGame", function(data){
             server.onAttemptToJoinGame(connection,data);
-        });
-
-        socket.on("fireBullet", function(){
-
         });
     
     }

@@ -2,6 +2,7 @@ let Connection = require('../Connection')
 module.exports = class LobbyBase{
     constructor(id){
         this.id = id;
+        //this.roommaster;
         this.connections = [];
     }
 
@@ -13,7 +14,6 @@ module.exports = class LobbyBase{
         let lobby = this;
         let player = connection.player;
         console.log('Player'+player.displayerPlayerInformation()+'has entered the lobby ('+ lobby.id+')');      
-        //lobby.connections.push(connection);
         lobby.connections[player.id] = connection;
         player.lobby = lobby.id;
         connection.lobby = lobby;
@@ -22,40 +22,41 @@ module.exports = class LobbyBase{
     onLeaveLobby(connection = Connection){
         let lobby = this;
         let player = connection.player;
-
-        console.log('Player'+player.displayerPlayerInformation()+'has left the lobby ('+ lobby.id+')');
-        
         connection.lobby = undefined;
-        //let index = lobby.connections.indexOf(connection);
-
-        // console.log("-----chuaxoa---------------");
-        // for(var key in lobby.connections){
-        //     console.log(lobby.connections[key].player);
-        // }
-
-        //if(index > -1){
-            //lobby.connections.splice(index,1);
         if(connection?.player.id){
             delete lobby.connections[connection.player.id]
         }
-        //}
-        
+       
+        // xoa lobby khi khong co nguoi nao o trong
         let playerinLobby = 0;
-        // console.log("---------daxoa----------");
         for(var key in lobby.connections){
             playerinLobby++;
         }
         if(playerinLobby==0 && lobby.id != 0){
-            connection.socket.broadcast.to(0).emit('xoa Room', JSON.stringify(lobby));
+            // console.log("------------------------");
+            // console.log(lobby.id);//connection.lobby.id
+            // console.log(lobby.lobbyState.currentState);
+            // console.log(lobby.roommaster.player.id);
+            var lobbyInformation = {
+                id: lobby.id,
+                currentState: lobby.lobbyState.currentState,
+                roommaster: lobby.roommaster.player.id
+            };
+            connection.socket.broadcast.to(0).emit('xoa Room', JSON.stringify(lobbyInformation));
             delete connection.server.lobbys[lobby.id];
             console.log("xoa thanh cong")
         }
-        // if(lobby.id!=0){
-        //     console.log(lobby.id+"iiiii"+playerinLobby);
-        // }
-        // if(lobby.connections.length){
-        //     console.log("okokokok")
-        // }
-
     }
+    // onLoadRoom(connection = Connection){
+    //     console.log("dang hoat doing")
+    //     let server = this;
+    //     for(var key in server.lobbys){
+    //         if(key != 0){
+    //             connection.socket.emit('list Room',JSON.stringify(server.lobbys[key]));
+    //         }
+    //     }
+    // }
+    // addRoom(connection = Connection, gamelobby){
+    //     connection.socket.broadcast.to(0).emit('list Room', JSON.stringify(gamelobby));
+    // }
 }

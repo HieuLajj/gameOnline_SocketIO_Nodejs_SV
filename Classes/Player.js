@@ -5,15 +5,6 @@ module.exports = class Player{
         this.id = shortID.generate();
         this.lobby = 0;
     }
-  
-    // constructor(name, position, health, selectedGun, rotationWeapon){
-    //     this.id = shortID.generate();
-    //     this.name = name;
-    //     this.position = position;
-    //     this.health = health;
-    //     this.selectedGun = selectedGun;
-    //     this.rotationWeapon = rotationWeapon;
-    // }
 
     displayerPlayerInformation(){
         let player = this;
