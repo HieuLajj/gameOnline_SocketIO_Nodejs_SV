@@ -4,6 +4,7 @@ module.exports = class Player{
     constructor(){
         this.id = shortID.generate();
         this.lobby = 0;
+        this.roommaster = 0;
     }
 
     displayerPlayerInformation(){

@@ -9,6 +9,7 @@ module.exports = class GameLobby extends LobbyBase{
         this.settings = settings;
         this.lobbyState = new LobbyState();
         this.roommaster;
+        this.map;
 
     }
 
@@ -29,6 +30,10 @@ module.exports = class GameLobby extends LobbyBase{
     onEnterLobby(connection = Connection){
         let lobby = this;
         super.onEnterLobby(connection);
+
+        //this.sendLobby(connection);
+
+
         lobby.addPlayer(connection);
     }
 
@@ -36,6 +41,16 @@ module.exports = class GameLobby extends LobbyBase{
         let lobby = this;
         super.onLeaveLobby(connection);
         lobby.removePlayer(connection);
+    }
+
+    sendLobby(connection = Connection){
+        let lobby = this;
+        var lobbyInformation = {
+            id: lobby.id,
+            currentState: lobby.lobbyState.currentState,
+            roommaster: lobby.roommaster.player.id
+        };
+        connection.socket.emit('lobby',JSON.stringify(lobbyInformation));
     }
 
     addPlayer(connection = Connection){

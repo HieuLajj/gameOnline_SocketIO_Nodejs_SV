@@ -68,6 +68,7 @@ module.exports = class ServerGame {
             this.addRoom(connection, gamelobby);
             server.lobbys[data] = gamelobby;
             server.lobbys[data].roommaster = connection;
+            connection.player.roommaster = 1;
             console.log(JSON.stringify(connection.player)+"dang la chu phong");
             server.onSwitchLobby(connection, gamelobby.id);
         }

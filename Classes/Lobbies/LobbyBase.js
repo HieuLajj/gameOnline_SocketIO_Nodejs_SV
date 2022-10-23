@@ -21,7 +21,7 @@ module.exports = class LobbyBase{
 
     onLeaveLobby(connection = Connection){
         let lobby = this;
-        let player = connection.player;
+        let player;
         connection.lobby = undefined;
         if(connection?.player.id){
             delete lobby.connections[connection.player.id]
@@ -45,6 +45,24 @@ module.exports = class LobbyBase{
             connection.socket.broadcast.to(0).emit('xoa Room', JSON.stringify(lobbyInformation));
             delete connection.server.lobbys[lobby.id];
             console.log("xoa thanh cong")
+        }else{
+            if(connection.player.roommaster == 1 && lobby.id != 0){
+                for(var key in lobby.connections){
+                    console.log(JSON.stringify(lobby.connections[key].player))
+                    player = lobby.connections[key].player;
+                    player.roommaster = 1;
+                    connection.socket.broadcast.to(lobby.id).emit('change status', JSON.stringify(player));
+                    connection.socket.to(lobby.connections[key].socket.id).emit('change roommaster', JSON.stringify(player));
+                    break;
+                }
+                // connection.socket.broadcast.to(lobby.id).emit('change status', JSON.stringify(player));
+                //connection.socket.to(pl)
+                // if(player == connection.player){
+                //     connection.socket.emit('change roommaster', JSON.stringify(player));
+                // }else {
+                //     connection.socket.emit('change status', JSON.stringify(player));
+                // }
+            }
         }
     }
     // onLoadRoom(connection = Connection){

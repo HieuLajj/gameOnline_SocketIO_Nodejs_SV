@@ -25,13 +25,16 @@ module.exports = class Connection{
             socket.emit('start game',data);
             socket.broadcast.to(connection.lobby.id).emit('start game',data);
             //console.log(JSON.stringify(connection.lobby)+"truoc khi vao game");
+            connection.lobby.map = data;
             connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.GAME;
             //console.log(JSON.stringify(connection.lobby)+"sau khi vao game");
         })
 
-        socket.on('back lobby',function(data){
-            socket.emit('back lobby',data);
-            socket.broadcast.to(connection.lobby.id).emit('back lobby',data);
+        socket.on('back lobby',function(){
+            let map = connection.lobby.map;
+            //console.log(map+"hahahahahahah")
+            socket.emit('back lobby',map);
+            socket.broadcast.to(connection.lobby.id).emit('back lobby',map);
             //console.log(JSON.stringify(connection.lobby)+"truoc khi thoat game");
             connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.LOBBY;
             //console.log(JSON.stringify(connection.lobby)+"sau khi thoat game");
@@ -90,6 +93,17 @@ module.exports = class Connection{
                 }
             }
 	    });
+
+
+        // chuphong, chua san sang, san sang
+        socket.on('change status', function(data) {
+            //const obj = JSON.parse(data);
+            //console.log(data);
+            player.roommaster = data;
+            socket.broadcast.to(connection.lobby.id).emit('change status', JSON.stringify(player));
+            socket.emit('change status', JSON.stringify(player));
+	    });
+
 
         socket.on("disconnect", function(){
             server.onDisconnected(connection);
