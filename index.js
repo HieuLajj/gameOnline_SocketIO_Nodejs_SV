@@ -12,9 +12,10 @@ server.listen(3000);
 
 let serverGame = new ServerGame();
 
-// setInterval(()=>{
-//     serverGame.onUpdate();
-// }, 100, 0);
+setInterval(()=>{
+    serverGame.onUpdate();
+    //console.log("laivanhieu");
+}, 100, 0);
 
 io.on('connection', function(socket) {
     console.log(socket.id+"ten id")

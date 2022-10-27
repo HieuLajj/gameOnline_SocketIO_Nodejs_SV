@@ -13,7 +13,10 @@ module.exports = class ServerGame {
     }
 
     onUpdate(){
-      
+      let server = this;
+      for(let id in server.lobbys){
+        server.lobbys[id].onUpdate();
+      }
     }
 
     onConnected(socket){
@@ -25,6 +28,7 @@ module.exports = class ServerGame {
         connection.player = new Player();
         let player = connection.player;
         let lobbys = server.lobbys;
+
         server.connections[player.id] = connection;
         
         socket.join(player.lobby);
@@ -69,7 +73,7 @@ module.exports = class ServerGame {
             server.lobbys[data] = gamelobby;
             server.lobbys[data].roommaster = connection;
             connection.player.roommaster = 1;
-            console.log(JSON.stringify(connection.player)+"dang la chu phong");
+            //console.log(JSON.stringify(connection.player)+"dang la chu phong");
             server.onSwitchLobby(connection, gamelobby.id);
         }
         else{
@@ -84,15 +88,40 @@ module.exports = class ServerGame {
         if(connection.player.lobby != "0"){
             connection.socket.broadcast.to(connection.player.lobby).emit('other player disconnected',JSON.stringify(connection.player));
         }
+
         let lobbys = server.lobbys;
+        
+        lobbys[connection.player.lobby].onLeaveLobby(connection);
+
         connection.socket.join(lobbyID); // Join the new lobby's socket channel
         connection.lobby = lobbys[lobbyID];//assign reference to the new lobby
-        lobbys[connection.player.lobby].onLeaveLobby(connection);
+        
+        //console.log("daadfdsfkajegfiajwgefijawge")
+        // them thanh vien vao cac doi
+        
+        if(lobbyID != "0"){
+            if(connection.lobby.blueTeam.length > connection.lobby.redTeam.length){
+                connection.lobby.redTeam.push(connection);
+                // console.log("team do co so thanh vien" + connection.lobby.redTeam.length);
+                // let index = connection.lobby.redTeam.indexOf(connection);
+                // console.log("so index phan tu trong doi la"+index);
+                console.log("tham gia doi do");
+                connection.player.team = 1;
+            }else{
+                connection.lobby.blueTeam.push(connection);
+                // console.log("team xanh co so thanh vien" + connection.lobby.blueTeam.length);
+                // let index = connection.lobby.blueTeam.indexOf(connection);
+                // console.log("so index phan tu trong doi la"+index);
+                console.log("tham gia doi xanh");
+                connection.player.team = 0;
+            }
+        }
+
+        // lobbys[connection.player.lobby].onLeaveLobby(connection);
         lobbys[lobbyID].onEnterLobby(connection);
     }
 
     onLoadRoom(connection = Connection){
-        //console.log("okokdangchay")
         let server = this;
         for(var key in server.lobbys){
             if(key != 0){
@@ -101,7 +130,6 @@ module.exports = class ServerGame {
                     currentState: server.lobbys[key].lobbyState.currentState,
                     roommaster: server.lobbys[key].roommaster.player.id
                 };
-                //console.log("okokoko"+JSON.stringify(server.lobbys[key]))
                 connection.socket.emit('list Room',JSON.stringify(lobbyInformation));
             }
         }

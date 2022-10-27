@@ -1,13 +1,29 @@
 let Connection = require('../Connection')
+let ServerItem = require('../Utility/ServerItem')
+let Vector2 = require('../Vector2')
+let AIBase = require('../AI/AIBase')
+
 module.exports = class LobbyBase{
     constructor(id){
         this.id = id;
-        //this.roommaster;
         this.connections = [];
+        this.serverItems = [];
     }
 
     onUpdate(){
-
+        let lobby = this;
+        let serverItems = lobby.serverItems;
+        let aiList = serverItems.filter(item =>{
+            return item instanceof AIBase;
+        })
+        aiList.forEach( ai => {
+            ai.onUpdate(data => {
+                lobby.connections.forEach(connection =>{
+                    let socket = connection.socket;
+                    socket.emit('updatePosition',data);
+                })
+            })
+        })
     }
 
     onEnterLobby(connection = Connection){
@@ -33,10 +49,6 @@ module.exports = class LobbyBase{
             playerinLobby++;
         }
         if(playerinLobby==0 && lobby.id != 0){
-            // console.log("------------------------");
-            // console.log(lobby.id);//connection.lobby.id
-            // console.log(lobby.lobbyState.currentState);
-            // console.log(lobby.roommaster.player.id);
             var lobbyInformation = {
                 id: lobby.id,
                 currentState: lobby.lobbyState.currentState,
@@ -48,23 +60,79 @@ module.exports = class LobbyBase{
         }else{
             if(connection.player.roommaster == 1 && lobby.id != 0){
                 for(var key in lobby.connections){
-                    console.log(JSON.stringify(lobby.connections[key].player))
                     player = lobby.connections[key].player;
                     player.roommaster = 1;
                     connection.socket.broadcast.to(lobby.id).emit('change status', JSON.stringify(player));
                     connection.socket.to(lobby.connections[key].socket.id).emit('change roommaster', JSON.stringify(player));
                     break;
                 }
-                // connection.socket.broadcast.to(lobby.id).emit('change status', JSON.stringify(player));
-                //connection.socket.to(pl)
-                // if(player == connection.player){
-                //     connection.socket.emit('change roommaster', JSON.stringify(player));
-                // }else {
-                //     connection.socket.emit('change status', JSON.stringify(player));
-                // }
             }
         }
     }
+
+    onServerSpawn(item = ServerItem, location = Vector2) {
+        let lobby = this;
+        let serverItems = lobby.serverItems;
+        let connections = lobby.connections;
+
+        //Set Position
+        item.position = location;
+        //Set item into the array
+        serverItems.push(item);
+
+        for(var key in connections){
+            var enemyItems = {
+                id: item.id,
+                name: item.username,
+                position: item.position.JSONData()
+            };
+            connections[key].socket.emit('serverSpawn', JSON.stringify(enemyItems));
+        }
+        // console.log("===========okokok")
+        // connections.forEach(connection => {
+        //     console.log(connection.player)
+        //     console.log(connection)
+        // })
+
+        //Tell everyone in the room
+        // connections.forEach(connection => {
+        //     console.log("conteajhfe")
+        //     var enemyItems = {
+        //         id: item.id,
+        //         name: item.username,
+        //         position: item.position.JSONData()
+        //     };
+        //     connection.socket.emit('serverSpawn', JSON.stringify(enemyItems));
+        // });
+    }
+
+    onServerUnspawn(item = ServerItem) {
+        let lobby = this;
+        let serverItems = lobby.serverItems;
+        let connections = lobby.connections;
+
+        //Remove item from array
+        lobby.deleteServerItem(item);
+        //Tell everyone in the room
+        connections.forEach(connection => {
+            connection.socket.emit('serverUnspawn', {
+                id: item.id
+            });
+        });
+    }
+
+    deleteServerItem(item = ServerItem) {
+        let lobby = this;
+        let serverItems = lobby.serverItems;
+        let index = serverItems.indexOf(item);
+
+        //Remove our item out the array
+        if (index > -1) {
+            serverItems.splice(index, 1);
+        }
+    }
+
+
     // onLoadRoom(connection = Connection){
     //     console.log("dang hoat doing")
     //     let server = this;

@@ -27,8 +27,64 @@ module.exports = class Connection{
             //console.log(JSON.stringify(connection.lobby)+"truoc khi vao game");
             connection.lobby.map = data;
             connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.GAME;
+
+            
+            // connection.lobby.redTeam.forEach(element => {
+            //     console.log(element.player.id);
+            // });
+            
             //console.log(JSON.stringify(connection.lobby)+"sau khi vao game");
         })
+
+        socket.on('mapPositionPlayer', function(data){
+            let index;
+            const obj = JSON.parse(data);
+            connection.lobby.positionBlue = [];
+            connection.lobby.positionRed = [];
+            obj.blueSpawnPoints.forEach(element => {
+               connection.lobby.positionBlue.push(element);
+            });
+            obj.redSpawnPoints.forEach(element =>{
+                connection.lobby.positionRed.push(element);
+            })
+            // console.log(connection.lobby.positionBlue);
+            // console.log("-----------------");
+            // console.log(connection.lobby.positionRed);
+
+            connection.lobby.redTeam.forEach((element,index) =>{
+                let playerSpawnPoint = {
+                    position: element.lobby.positionRed[index].position,
+                    name: element.player.name
+                };
+                console.log("xanh"+playerSpawnPoint.name)
+                socket.emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
+                socket.broadcast.to(connection.lobby.id).emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
+            })
+            connection.lobby.blueTeam.forEach((element,index) =>{
+                let playerSpawnPoint = {
+                    position: element.lobby.positionBlue[index].position,
+                    name: element.player.name
+                };
+                console.log("do"+playerSpawnPoint.name)
+                socket.emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
+                socket.broadcast.to(connection.lobby.id).emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
+            })
+            // if(player.team ==0){
+            //     index = connection.lobby.blueTeam?.indexOf(connection);
+            // }else{
+            //     index = connection.lobby.redTeam?.indexOf(connection);
+            // }
+            // let playerSpawnPoint = {
+            //     position: connection.lobby.positionBlue[index].position,
+            //     name: player.name
+            // };
+            // socket.emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
+
+
+            //console.log(connection.lobby.positionBlue);
+            // player.rotationWeapon = obj.rotation;
+            // socket.broadcast.to(connection.lobby.id).emit('weapon rotation', JSON.stringify(player));
+	    });
 
         socket.on('back lobby',function(){
             let map = connection.lobby.map;
@@ -111,7 +167,6 @@ module.exports = class Connection{
         
         socket.on("joinGame", function(data){
             server.onAttemptToJoinGame(connection,data);
-        });
-    
+        });   
     }
 }
