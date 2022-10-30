@@ -21,23 +21,32 @@ module.exports = class Connection{
             socket.broadcast.to(connection.lobby.id).emit('other player connected', JSON.stringify(player));
         })
 
+        socket.on("resetRoom", function(){
+            server.onLoadRoom(connection);
+        })
+
         socket.on('start game',function(data){
             socket.emit('start game',data);
             socket.broadcast.to(connection.lobby.id).emit('start game',data);
-            //console.log(JSON.stringify(connection.lobby)+"truoc khi vao game");
             connection.lobby.map = data;
             connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.GAME;
+            //xoa tat ca cac item con trong phong
+            connection.lobby.serverItems = [];
+            
+            //cap nhap trang thai phong cho nguoi dung
+            let statusLobby = {
+                id: connection.lobby.id,
+                currentState: connection.lobby.lobbyState.currentState,
+            };
+            socket.emit('statuslobby',JSON.stringify(statusLobby));
+            socket.broadcast.emit('statuslobby',JSON.stringify(statusLobby));
 
-            
-            // connection.lobby.redTeam.forEach(element => {
-            //     console.log(element.player.id);
-            // });
-            
-            //console.log(JSON.stringify(connection.lobby)+"sau khi vao game");
+            connection.lobby.connections.forEach(element => {
+                element.player.rebornTime = 0;
+            });
         })
 
         socket.on('mapPositionPlayer', function(data){
-            let index;
             const obj = JSON.parse(data);
             connection.lobby.positionBlue = [];
             connection.lobby.positionRed = [];
@@ -47,16 +56,11 @@ module.exports = class Connection{
             obj.redSpawnPoints.forEach(element =>{
                 connection.lobby.positionRed.push(element);
             })
-            // console.log(connection.lobby.positionBlue);
-            // console.log("-----------------");
-            // console.log(connection.lobby.positionRed);
-
             connection.lobby.redTeam.forEach((element,index) =>{
                 let playerSpawnPoint = {
                     position: element.lobby.positionRed[index].position,
                     name: element.player.name
                 };
-                console.log("xanh"+playerSpawnPoint.name)
                 socket.emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
                 socket.broadcast.to(connection.lobby.id).emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
             })
@@ -65,43 +69,46 @@ module.exports = class Connection{
                     position: element.lobby.positionBlue[index].position,
                     name: element.player.name
                 };
-                console.log("do"+playerSpawnPoint.name)
                 socket.emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
                 socket.broadcast.to(connection.lobby.id).emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
             })
-            // if(player.team ==0){
-            //     index = connection.lobby.blueTeam?.indexOf(connection);
-            // }else{
-            //     index = connection.lobby.redTeam?.indexOf(connection);
-            // }
-            // let playerSpawnPoint = {
-            //     position: connection.lobby.positionBlue[index].position,
-            //     name: player.name
-            // };
-            // socket.emit('positionPlayerInMap', JSON.stringify(playerSpawnPoint));
-
-
-            //console.log(connection.lobby.positionBlue);
-            // player.rotationWeapon = obj.rotation;
-            // socket.broadcast.to(connection.lobby.id).emit('weapon rotation', JSON.stringify(player));
 	    });
 
         socket.on('back lobby',function(){
             let map = connection.lobby.map;
-            //console.log(map+"hahahahahahah")
             socket.emit('back lobby',map);
             socket.broadcast.to(connection.lobby.id).emit('back lobby',map);
-            //console.log(JSON.stringify(connection.lobby)+"truoc khi thoat game");
+
+            //xoa tat ca cac item con trong phong
+            connection.lobby.serverItems = [];
+
+            connection.lobby.connections.forEach(element => {
+                var response = {
+                    name: element.player.name,
+                    health: 100,
+                    position: [0.0,0.0,0.0],
+                };
+                element.socket.emit('reborn', JSON.stringify(response));
+                element.socket.broadcast.to(element.lobby.id).emit('reborn', JSON.stringify(response));
+            });
             connection.lobby.lobbyState.currentState = connection.lobby.lobbyState.LOBBY;
-            //console.log(JSON.stringify(connection.lobby)+"sau khi thoat game");
+             //cap nhap trang thai phong cho nguoi dung
+            let statusLobby = {
+                id: connection.lobby.id,
+                currentState: connection.lobby.lobbyState.currentState,
+            };
+            socket.emit('statuslobby',JSON.stringify(statusLobby));
+            socket.broadcast.emit('statuslobby',JSON.stringify(statusLobby));
+
         })
 
         socket.on('player connect', function(){ 
-            for(var key in server.lobbys[connection.lobby.id].connections){
-                if(player != server.lobbys[connection.lobby.id].connections[key].player){
-                    socket.emit('other player connected', JSON.stringify(server.connections[key]?.player));
+            //chuyen doi
+            server.lobbys[connection.lobby.id].connections.forEach(element => {
+                if(player != element.player){
+                    socket.emit('other player connected', JSON.stringify(element?.player));
                 }
-            }
+            });
         });
 
         socket.on('weapon rotation', function(data){
@@ -135,26 +142,52 @@ module.exports = class Connection{
         socket.on('health', function(data) {
             const obj = JSON.parse(data); 
             if(obj.from === player.name) {
-                for(var key in server.connections){
-                    if(server.connections[key].player.name === obj.name){
-                        console.log(server.connections[key].player.name+"()()()");
-                        server.connections[key].player.health -= obj.healthChange;
+                server.connections.forEach(element => {
+                    
+                    if(element.player.name === obj.name){
+                        element.player.health -= obj.healthChange;
                         var response = {
-                            name: server.connections[key].player.name,
-                            health: server.connections[key].player.health,
+                            name: element.player.name,
+                            health: element.player.health,
                         };
                         socket.emit('health', JSON.stringify(response));
-                        socket.broadcast.to(connection.lobby.id).emit('health', JSON.stringify(response));
-                    };
-                }
+                        socket.broadcast.to(element.lobby.id).emit('health', JSON.stringify(response));
+
+                        if(element.player.health<=0 && element.player.isDeath == 1){
+                            element.player.rebornTime += 5000
+                            element.player.isDeath = 0;
+                            setTimeout (()=>{
+                                if(!connection?.lobby) return;
+                                if(connection.lobby.lobbyState.currentState == connection.lobby.lobbyState.LOBBY) return;
+                                element.player.isDeath = 1;
+                                let index, positionPlayer;
+                                if(element.player.team==0){
+                                    index = element.lobby.blueTeam.indexOf(element);
+                                    positionPlayer = element.lobby.positionBlue[index]?.position;
+                                }else{
+                                    index = element.lobby.redTeam.indexOf(element);
+                                    positionPlayer = element.lobby.positionRed[index]?.position;
+                                }
+                        
+                                element.player.health = 100;
+                                var response = {
+                                    name: element.player.name,
+                                    health: element.player.health,
+                                    position: positionPlayer,
+                                };
+                                socket.emit('reborn', JSON.stringify(response));
+                                socket.broadcast.to(element.lobby.id).emit('reborn', JSON.stringify(response));
+                            },3000);
+                            //element.player.rebornTime 
+                        }
+                    }
+                });
             }
 	    });
 
 
         // chuphong, chua san sang, san sang
         socket.on('change status', function(data) {
-            //const obj = JSON.parse(data);
-            //console.log(data);
             player.roommaster = data;
             socket.broadcast.to(connection.lobby.id).emit('change status', JSON.stringify(player));
             socket.emit('change status', JSON.stringify(player));
@@ -167,6 +200,20 @@ module.exports = class Connection{
         
         socket.on("joinGame", function(data){
             server.onAttemptToJoinGame(connection,data);
-        });   
+        });  
+        
+        socket.on("item server", function(data){
+            let indexItem;
+            connection.lobby.serverItems.forEach((element,index) => {
+                if(element.id == data){
+                    indexItem = index;
+                }
+            });
+            if(indexItem > -1){
+                connection.lobby.serverItems.splice(indexItem,1);
+                socket.emit('item server', JSON.stringify(data));
+                socket.broadcast.to(connection.lobby.id).emit('item server', JSON.stringify(data));
+            }
+        })
     }
 }

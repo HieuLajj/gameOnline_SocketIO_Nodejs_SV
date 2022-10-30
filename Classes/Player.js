@@ -6,6 +6,8 @@ module.exports = class Player{
         this.lobby = 0;
         this.roommaster = 0;
         this.team = 0;
+        this.rebornTime = 0;
+        this.isDeath = 1;
     }
 
     displayerPlayerInformation(){
@@ -19,5 +21,17 @@ module.exports = class Player{
         this.health = health;
         this.selectedGun = selectedGun;
         this.rotationWeapon = rotationWeapon;
+    }
+
+    resetPlayer(){
+        this.roommaster = 0;
+        this.team = 0;
+        this.rebornTime = 0;
+        this.isDeath = 1;
+        this.name = 0;
+        this.position = 0;
+        this.health = 0;
+        this.selectedGun = 0;
+        this.rotationWeapon = 0;
     }
 }

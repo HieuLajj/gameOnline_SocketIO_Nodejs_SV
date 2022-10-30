@@ -100,20 +100,15 @@ module.exports = class GameLobby extends LobbyBase{
 
     }
     removeTeam(connection = Connection){
-        //console.log("dang chay ne 3"+connection.lobby.id );
         if(connection.player.team==0){
             let index = connection.lobby.blueTeam?.indexOf(connection);
-            //console.log("dang chay ne 3 ok"+index );
             if (index > -1) {
                 connection.lobby.blueTeam.splice(index, 1);
-                console.log("xoa doi blue thanh cong");
             }
         }else{
             let index = connection.lobby.redTeam?.indexOf(connection);
-            //console.log("dang chay ne 3 ok"+index );
             if (index > -1) {
                 connection.lobby.redTeam.splice(index, 1);
-                console.log("xoa doi red thanh cong");
             }
         }
     }
