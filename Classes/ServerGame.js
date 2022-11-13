@@ -76,7 +76,7 @@ module.exports = class ServerGame {
         //All game lobbies full or we have never created one
         if(!lobbyFound) {
             console.log('Making a new game lobby '+data);
-            let gamelobby = new GameLobby(data, new GameLobbySetting('FFA', 2));
+            let gamelobby = new GameLobby(data, new GameLobbySetting('HIEU', 4));
             this.addRoom(connection, gamelobby);
             gamelobby.roommaster = connection;
             server.lobbys[data] = gamelobby;

@@ -22,12 +22,14 @@ module.exports = class LobbyBase{
         let serverItem = new ServerItem();
         let xcount = Math.floor(Math.random() * 50);
         let ycount = Math.floor(Math.random() * 50);
+        let typeItem = Math.floor(Math.random() * 2);
 
         lobby.onServerSpawn(serverItem, new Vector2(xcount, ycount));
         var items = {
             id: serverItem.id,
             name: serverItem.username,
-            position: serverItem.position.JSONData()
+            position: serverItem.position.JSONData(),
+            type: typeItem,
         };
         lobby.connections.forEach(connection =>{
             let socket = connection.socket;

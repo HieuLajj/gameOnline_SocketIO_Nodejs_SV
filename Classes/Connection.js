@@ -26,6 +26,29 @@ module.exports = class Connection{
         })
 
         socket.on('start game',function(data){
+            //kiem tra so nguoi giua hai doi
+            // if(connection.lobby.redTeam.length != connection.lobby.blueTeam.length) { 
+            //     console.log("so thanh vien cua 2 doi khong can bang");
+            //     return; 
+            // }
+            connection.lobby.redTeam.forEach(element => {
+                if(element.player.roommaster == 0){
+                    console.log("co thanh vien doi do chua san sang");
+                    return;
+                };
+            });
+            connection.lobby.blueTeam.forEach(element => {
+                if(element.player.roommaster == 0){
+                    console.log("co thanh vien doi xanh chua san sang");
+                    return;
+                };
+            });
+            // (let a in  connection.lobby.redTeam.connection.team){
+            //     if(a==0){
+            //         console.log("co thanh vien khong san sang");
+            //     }
+            // }
+
             socket.emit('start game',data);
             socket.broadcast.to(connection.lobby.id).emit('start game',data);
             connection.lobby.map = data;
@@ -44,6 +67,19 @@ module.exports = class Connection{
             connection.lobby.connections.forEach(element => {
                 element.player.rebornTime = 0;
             });
+        })
+
+        socket.on('changeTeam',function(){
+            connection.lobby.removeTeam(connection);
+            let promiseTeam = player.team ? 0 : 1;
+            player.team = promiseTeam;
+            if(promiseTeam){
+                connection.lobby.redTeam.push(connection);
+            }else{
+                connection.lobby.blueTeam.push(connection);
+            }
+            socket.emit('changeTeam',JSON.stringify(player));
+            socket.broadcast.to(connection.lobby.id).emit('changeTeam',JSON.stringify(player));
         })
 
         socket.on('mapPositionPlayer', function(data){
@@ -74,10 +110,14 @@ module.exports = class Connection{
             })
 	    });
 
-        socket.on('back lobby',function(){
-            let map = connection.lobby.map;
-            socket.emit('back lobby',map);
-            socket.broadcast.to(connection.lobby.id).emit('back lobby',map);
+        socket.on('back lobby',function(data){
+            var response = {
+                map: connection.lobby.map,
+                teamlose: data 
+            };
+            //let map = connection.lobby.map;
+            socket.emit('back lobby',JSON.stringify(response));
+            socket.broadcast.to(connection.lobby.id).emit('back lobby',JSON.stringify(response));
 
             //xoa tat ca cac item con trong phong
             connection.lobby.serverItems = [];
@@ -86,7 +126,7 @@ module.exports = class Connection{
                 var response = {
                     name: element.player.name,
                     health: 100,
-                    position: [0.0,0.0,0.0],
+                    position: PositionSpawn.lobbyPosition,
                 };
                 element.socket.emit('reborn', JSON.stringify(response));
                 element.socket.broadcast.to(element.lobby.id).emit('reborn', JSON.stringify(response));
@@ -118,9 +158,33 @@ module.exports = class Connection{
 	    });
 
         socket.on('selected gun', function(data){
-            const obj = JSON.parse(data);
-            player.selectedGun = obj.selectedGun;
+            let levelgun = player.selectedGun;
+            let levelhealths = player.levelhealth;
+            //Math.floor(Math.random() * 2)
+            switch(0){
+                case 0:
+                    levelgun+=1;
+                    if(levelgun>4){levelgun=4}
+                    player.selectedGun = levelgun;
+                    console.log("tang dan");
+                    break 
+                case 1:
+                    levelhealths+=1;
+                    if(levelhealths>5){levelhealths=5;}
+                    player.levelhealth = levelhealths;
+                    console.log("tang mau")
+                    break;
+                default:
+                    break;
+            }
+        
+            socket.emit('selected gun',JSON.stringify(player));
             socket.broadcast.to(connection.lobby.id).emit('selected gun', JSON.stringify(player));
+
+
+            // const obj = JSON.parse(data);
+            // player.selectedGun = obj.selectedGun;
+            // socket.broadcast.to(connection.lobby.id).emit('selected gun', JSON.stringify(player));
         })
 
         socket.on('player shoot', function() {
@@ -145,7 +209,8 @@ module.exports = class Connection{
                 server.connections.forEach(element => {
                     
                     if(element.player.name === obj.name){
-                        element.player.health -= obj.healthChange;
+                        let maubitru = obj.healthChange * (1/element.player.levelhealth);
+                        element.player.health -= maubitru;
                         var response = {
                             name: element.player.name,
                             health: element.player.health,
@@ -184,6 +249,33 @@ module.exports = class Connection{
                 });
             }
 	    });
+
+        socket.on('healthplus', function(data) {
+            const obj = JSON.parse(data); 
+            // console.log(obj);
+            server.connections.forEach(element => {
+                    
+                if(element.player.name === obj.name){
+                    let hp = element.player.health + obj.healthChange;
+                    if(hp > 100){
+                        hp = 100
+                    }
+                    element.player.health = hp;
+                    var response = {
+                        name: element.player.name,
+                        health: element.player.health,
+                    };
+                    socket.emit('health', JSON.stringify(response));
+                    socket.broadcast.to(element.lobby.id).emit('health', JSON.stringify(response));
+                }
+            })
+            // var response = {
+            //     name: obj.name,
+            //     health: element.player.health,
+            // };
+            // socket.emit('health', JSON.stringify(response));
+            // socket.broadcast.to(element.lobby.id).emit('health', JSON.stringify(response));
+        })
 
 
         // chuphong, chua san sang, san sang

@@ -36,7 +36,11 @@ module.exports = class GameLobby extends LobbyBase{
 
     onEnterLobby(connection = Connection){
         let lobby = this;
-        
+        if(!this.canEnterLobby(connection)){
+            console.log("so thanh vien da max trong phong");
+            return; 
+        }
+
         super.onEnterLobby(connection);
 
         //this.sendLobby(connection);

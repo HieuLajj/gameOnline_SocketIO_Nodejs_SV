@@ -3,7 +3,6 @@ module.exports = class LobbyState{
         this.GAME = 'Game';
         this.LOBBY = 'Lobby'; //player waitting
         this.ENDGAME = 'EndGame';
-
         this.currentState = this.LOBBY;
     }
 }

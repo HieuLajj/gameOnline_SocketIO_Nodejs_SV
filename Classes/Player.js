@@ -8,6 +8,7 @@ module.exports = class Player{
         this.team = 0;
         this.rebornTime = 0;
         this.isDeath = 1;
+        this.levelhealth = 1;
     }
 
     displayerPlayerInformation(){
@@ -33,5 +34,6 @@ module.exports = class Player{
         this.health = 0;
         this.selectedGun = 0;
         this.rotationWeapon = 0;
+        this.levelhealth = 1;
     }
 }

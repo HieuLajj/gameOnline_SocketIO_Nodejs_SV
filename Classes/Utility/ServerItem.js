@@ -5,5 +5,6 @@ module.exports = class ServerItem {
         this.username = "ServerItem";
         this.id = shortID.generate();
         this.position = new Vector2();
+        this.type = 0;
     }
 }
