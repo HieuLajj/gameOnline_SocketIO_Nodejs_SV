@@ -59,7 +59,7 @@ module.exports = class LobbyBase{
         let index = lobby.connections.indexOf(connection);
         if (index <-1) return;
         lobby.connections.push(connection);
-        //console.log('Player'+player.displayerPlayerInformation()+'has entered the lobby ('+ lobby.id+')');      
+        console.log('Player'+player.displayerPlayerInformation()+'has entered the lobby ('+ lobby.id+')');      
         //lobby.connections[player.id] = connection;
         //chuyen doiu
         if (lobby.id == 0){

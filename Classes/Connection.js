@@ -25,24 +25,46 @@ module.exports = class Connection{
             server.onLoadRoom(connection);
         })
 
-        socket.on('start game',function(data){
-            //kiem tra so nguoi giua hai doi
-            // if(connection.lobby.redTeam.length != connection.lobby.blueTeam.length) { 
-            //     console.log("so thanh vien cua 2 doi khong can bang");
-            //     return; 
-            // }
+        function kiemtrathanhviensansang(){
+            let flag = true;
             connection.lobby.redTeam.forEach(element => {
                 if(element.player.roommaster == 0){
-                    console.log("co thanh vien doi do chua san sang");
-                    return;
+                    console.log(element.player.name)
+                    flag =false;
                 };
             });
-            connection.lobby.blueTeam.forEach(element => {
-                if(element.player.roommaster == 0){
-                    console.log("co thanh vien doi xanh chua san sang");
-                    return;
-                };
-            });
+            if(flag){
+                connection.lobby.blueTeam.forEach(element => {
+                    if(element.player.roommaster == 0){
+                        console.log(element.player.name)
+                        flag = false;
+                    };
+                });
+            }
+        }
+
+        socket.on('start game',function(data){
+            //kiem tra so nguoi giua hai doi
+            if(connection.lobby.redTeam.length != connection.lobby.blueTeam.length) { 
+                socket.emit('post',"so thanh vien hai doi khong can bang");
+                return; 
+            }
+            // connection.lobby.redTeam.forEach(element => {
+            //     if(element.player.roommaster == 0){
+            //         console.log("co thanh vien doi do chua san sang");
+            //         return;
+            //     };
+            // });
+            // connection.lobby.blueTeam.forEach(element => {
+            //     if(element.player.roommaster == 0){
+            //         console.log("co thanh vien doi xanh chua san sang");
+            //         return;
+            //     };
+            // });
+            if(!kiemtrathanhviensansang()){
+                socket.emit('post',"co thanh vien khong san sang");
+                //return;
+            }
             // (let a in  connection.lobby.redTeam.connection.team){
             //     if(a==0){
             //         console.log("co thanh vien khong san sang");
@@ -111,6 +133,7 @@ module.exports = class Connection{
 	    });
 
         socket.on('back lobby',function(data){
+            player.levelhealth = 1;
             var response = {
                 map: connection.lobby.map,
                 teamlose: data 
@@ -127,6 +150,7 @@ module.exports = class Connection{
                     name: element.player.name,
                     health: 100,
                     position: PositionSpawn.lobbyPosition,
+                    selectedGun : 0,
                 };
                 element.socket.emit('reborn', JSON.stringify(response));
                 element.socket.broadcast.to(element.lobby.id).emit('reborn', JSON.stringify(response));
@@ -239,6 +263,7 @@ module.exports = class Connection{
                                     name: element.player.name,
                                     health: element.player.health,
                                     position: positionPlayer,
+                                    selectedGun: element.player.selectedGun,
                                 };
                                 socket.emit('reborn', JSON.stringify(response));
                                 socket.broadcast.to(element.lobby.id).emit('reborn', JSON.stringify(response));
