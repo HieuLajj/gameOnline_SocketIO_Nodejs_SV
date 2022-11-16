@@ -26,21 +26,25 @@ module.exports = class Connection{
         })
 
         function kiemtrathanhviensansang(){
-            let flag = true;
+            let flag = 0;
             connection.lobby.redTeam.forEach(element => {
                 if(element.player.roommaster == 0){
                     console.log(element.player.name)
-                    flag =false;
+                    flag++;
                 };
             });
-            if(flag){
+            if(!flag){
                 connection.lobby.blueTeam.forEach(element => {
                     if(element.player.roommaster == 0){
                         console.log(element.player.name)
-                        flag = false;
+                        flag++;
                     };
                 });
             }
+            if(flag==0){
+                return false
+            }
+            return true
         }
 
         socket.on('start game',function(data){
@@ -49,28 +53,12 @@ module.exports = class Connection{
                 socket.emit('post',"so thanh vien hai doi khong can bang");
                 return; 
             }
-            // connection.lobby.redTeam.forEach(element => {
-            //     if(element.player.roommaster == 0){
-            //         console.log("co thanh vien doi do chua san sang");
-            //         return;
-            //     };
-            // });
-            // connection.lobby.blueTeam.forEach(element => {
-            //     if(element.player.roommaster == 0){
-            //         console.log("co thanh vien doi xanh chua san sang");
-            //         return;
-            //     };
-            // });
-            if(!kiemtrathanhviensansang()){
+            
+            if(kiemtrathanhviensansang()){
                 socket.emit('post',"co thanh vien khong san sang");
-                //return;
+                return;
             }
-            // (let a in  connection.lobby.redTeam.connection.team){
-            //     if(a==0){
-            //         console.log("co thanh vien khong san sang");
-            //     }
-            // }
-
+           
             socket.emit('start game',data);
             socket.broadcast.to(connection.lobby.id).emit('start game',data);
             connection.lobby.map = data;
@@ -152,6 +140,7 @@ module.exports = class Connection{
                     position: PositionSpawn.lobbyPosition,
                     selectedGun : 0,
                 };
+                console.log(JSON.stringify(response));
                 element.socket.emit('reborn', JSON.stringify(response));
                 element.socket.broadcast.to(element.lobby.id).emit('reborn', JSON.stringify(response));
             });
