@@ -49,15 +49,15 @@ module.exports = class Connection{
 
         socket.on('start game',function(data){
             //kiem tra so nguoi giua hai doi
-            if(connection.lobby.redTeam.length != connection.lobby.blueTeam.length) { 
-                socket.emit('post',"so thanh vien hai doi khong can bang");
-                return; 
-            }
+            // if(connection.lobby.redTeam.length != connection.lobby.blueTeam.length) { 
+            //     socket.emit('post',"so thanh vien hai doi khong can bang");
+            //     return; 
+            // }
             
-            if(kiemtrathanhviensansang()){
-                socket.emit('post',"co thanh vien khong san sang");
-                return;
-            }
+            // if(kiemtrathanhviensansang()){
+            //     socket.emit('post',"co thanh vien khong san sang");
+            //     return;
+            // }
            
             socket.emit('start game',data);
             socket.broadcast.to(connection.lobby.id).emit('start game',data);
@@ -201,6 +201,7 @@ module.exports = class Connection{
         })
 
         socket.on('player shoot', function() {
+            // console.log("metad");
 		    var data = {
 			    name: player.name
 		    };

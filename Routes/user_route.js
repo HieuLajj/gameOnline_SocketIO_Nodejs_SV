@@ -15,4 +15,8 @@ router.post('/increasewin',isAuth, userController.increasewin);
 
 //raise_lose
 router.get('/increaselose',isAuth, userController.increaselose);
+
+//get_all
+router.get('/getall',isAuth, userController.getAll);
+
 module.exports = router;

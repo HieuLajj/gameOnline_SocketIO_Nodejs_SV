@@ -86,6 +86,14 @@ const userController = {
       } catch (error) {
         res.send(error)
       }
-    }  
+    },  
+    getAll: async(req,res)=>{
+      try{
+          const authors = await User.find().sort({"win":-1});
+          res.send(JSON.stringify(authors));
+      }catch(err){
+        res.send(err)
+      }
+   },
 }
 module.exports = userController;
